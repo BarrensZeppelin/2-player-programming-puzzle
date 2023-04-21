@@ -83,7 +83,12 @@ with tempfile.TemporaryDirectory(dir="") as pth:
 
     # Prepare task2
     task2 = Path(pth) / "task2.md"
-    shutil.copy("task2.md", task2)
+    task2.write_text(
+        Path("task2.md")
+        .read_text()
+        .replace("<start>", str(start_node))
+        .replace("<end>", str(end_node))
+    )
     subprocess.run(["mcrypt", "--unlink", task2, "-k", passwd1], check=True, text=True)
 
     # Prepare task1
@@ -96,9 +101,11 @@ with tempfile.TemporaryDirectory(dir="") as pth:
         .replace("<C>", str(C))
     )
 
-    subprocess.run(["zip", "../puzzle.zip"] + [f.name for f in Path(pth).iterdir()], cwd=pth, check=True)
-
-exit()
+    subprocess.run(
+        ["zip", "../puzzle.zip"] + [f.name for f in Path(pth).iterdir()],
+        cwd=pth,
+        check=True,
+    )
 
 
 DIR_DEPTH = 7
@@ -123,6 +130,9 @@ with tempfile.TemporaryDirectory(dir="") as pth:
     for pth in dirs:
         (task1 / pth).mkdir(parents=True, exist_ok=True)
 
-    cands = [p for p in dirs if p.count("/") == DIR_DEPTH - 1]
-    assert cands
-    task_dir = task1 / random.choice(cands)
+    cnds = [p for p in dirs if p.count("/") == DIR_DEPTH - 1]
+    assert cnds
+    task_dir = task1 / random.choice(cnds)
+    os.rename("puzzle.zip", task_dir / "task.zip")
+
+    subprocess.run(["zip", "-r", "../puzzle.zip", "task1"], check=True, cwd=root)
